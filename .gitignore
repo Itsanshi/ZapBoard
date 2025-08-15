@@ -39,3 +39,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+backend/.venv/*
+.idea/*
+backend/projects/migrations/__pycache__/
+backend/zapboard_backend/__pycache__/

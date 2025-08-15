@@ -1,0 +1,27 @@
+{
+  "name": "legally-fit",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:backend": "cd backend && source .venv/bin/activate && USE_SQLITE=1 python manage.py runserver",
+    "setup": "npm run setup:backend && npm run install:all",
+    "setup:backend": "cd backend && python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt",
+    "build": "npm run build:frontend && npm run build:backend",
+    "build:frontend": "cd frontend && npm run build",
+    "build:backend": "cd backend && source .venv/bin/activate && python manage.py collectstatic --noinput",
+    "start": "npm run start:frontend & npm run start:backend",
+    "start:frontend": "cd frontend && npm run start",
+    "start:backend": "cd backend && source .venv/bin/activate && USE_SQLITE=1 python manage.py runserver",
+    "install:all": "npm install && cd frontend && npm install",
+    "migrate": "cd backend && source .venv/bin/activate && USE_SQLITE=1 python manage.py migrate",
+    "makemigrations": "cd backend && source .venv/bin/activate && USE_SQLITE=1 python manage.py makemigrations",
+    "populate-data": "cd backend && source .venv/bin/activate && python populate_sample_data.py",
+    "lint": "npm run lint:frontend",
+    "lint:frontend": "cd frontend && npm run lint"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

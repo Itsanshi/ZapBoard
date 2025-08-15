@@ -1,0 +1,8 @@
+Django>=4.0
+django-cors-headers
+graphene-django
+django-graphql-jwt
+psycopg2-binary
+python-decouple
+djangorestframework
+dotenv
