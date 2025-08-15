@@ -3,11 +3,15 @@
 import { Task } from '@/types';
 import { formatDateTime, isDateOverdue } from '@/lib/utils';
 import { cn } from '@/lib/utils';
-import { Calendar, User, MessageSquare, AlertCircle, Clock, CheckCircle2 } from 'lucide-react';
+import { Calendar, User, MessageSquare, AlertCircle, Clock, CheckCircle2, ChevronDown } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { useMutation } from '@apollo/client';
+import { UPDATE_TASK } from '@/lib/graphql';
 
 interface TaskCardProps {
   task: Task;
   onTaskClick: (task: Task) => void;
+  onTaskUpdate?: () => void;
 }
 
 const statusOptions = [
@@ -16,8 +20,24 @@ const statusOptions = [
   { value: 'DONE', label: 'Done', color: 'bg-green-100 text-green-700' },
 ];
 
-export default function TaskCard({ task, onTaskClick }: TaskCardProps) {
+export default function TaskCard({ task, onTaskClick, onTaskUpdate }: TaskCardProps) {
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [updateTask, { loading: updating }] = useMutation(UPDATE_TASK);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const isOverdue = isDateOverdue(task.dueDate);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    if (isDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [isDropdownOpen]);
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -41,6 +61,29 @@ export default function TaskCard({ task, onTaskClick }: TaskCardProps) {
     }
   };
 
+  const handleStatusChange = async (newStatus: string) => {
+    if (newStatus === task.status) {
+      setIsDropdownOpen(false);
+      return;
+    }
+
+    try {
+      await updateTask({
+        variables: {
+          id: task.id,
+          status: newStatus,
+        },
+      });
+      
+      if (onTaskUpdate) {
+        onTaskUpdate();
+      }
+      setIsDropdownOpen(false);
+    } catch (error) {
+      console.error('Error updating task status:', error);
+    }
+  };
+
   return (
     <div className="modern-card group cursor-pointer transition-all duration-300 hover:shadow-lg animate-slide-in-right">
       <div className="p-5">
@@ -53,9 +96,62 @@ export default function TaskCard({ task, onTaskClick }: TaskCardProps) {
             {task.title}
           </h3>
           <div className="flex items-center space-x-2">
-            <div className={cn('status-badge flex items-center space-x-1', getStatusStyle(task.status))}>
-              {getStatusIcon(task.status)}
-              <span>{statusOptions.find(opt => opt.value === task.status)?.label}</span>
+            <div className="relative" ref={dropdownRef}>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsDropdownOpen(!isDropdownOpen);
+                }}
+                disabled={updating}
+                className={cn(
+                  'status-badge flex items-center space-x-1 cursor-pointer transition-all duration-200 hover:shadow-md',
+                  getStatusStyle(task.status),
+                  updating && 'opacity-50 cursor-not-allowed'
+                )}
+              >
+                {getStatusIcon(task.status)}
+                <span>{statusOptions.find(opt => opt.value === task.status)?.label}</span>
+                <ChevronDown className={cn(
+                  'w-3 h-3 transition-transform duration-200',
+                  isDropdownOpen && 'rotate-180'
+                )} />
+              </button>
+
+              {isDropdownOpen && (
+                <div 
+                  className="absolute top-full left-0 mt-1 py-1 rounded-lg shadow-lg z-50 min-w-[120px] border animate-fade-in-up"
+                  style={{
+                    backgroundColor: 'var(--surface)',
+                    borderColor: 'var(--border)',
+                    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)'
+                  }}
+                >
+                  {statusOptions.map((option) => (
+                    <button
+                      key={option.value}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleStatusChange(option.value);
+                      }}
+                      className={cn(
+                        'status-dropdown-item w-full text-left px-3 py-2 text-sm transition-colors duration-150 flex items-center space-x-2',
+                        task.status === option.value && 'font-medium'
+                      )}
+                      style={{
+                        color: task.status === option.value 
+                          ? 'var(--text-accent)' 
+                          : 'var(--text-primary)',
+                        backgroundColor: task.status === option.value 
+                          ? 'var(--surface-secondary)' 
+                          : 'transparent'
+                      }}
+                    >
+                      {getStatusIcon(option.value)}
+                      <span>{option.label}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>

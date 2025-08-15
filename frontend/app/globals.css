@@ -707,6 +707,15 @@ body {
   color: #f9fafb;
 }
 
+/* Status Dropdown Hover Effects */
+.status-dropdown-item:hover {
+  background-color: var(--surface-secondary);
+}
+
+[data-theme="dark"] .status-dropdown-item:hover {
+  background-color: #374151;
+}
+
 /* Theme Toggle Button */
 .theme-toggle {
   position: fixed;

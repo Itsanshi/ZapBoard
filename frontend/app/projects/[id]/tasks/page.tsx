@@ -25,7 +25,7 @@ export default function TasksPage() {
     variables: { id: projectId },
   });
 
-  const { data: tasksData, loading: tasksLoading, error: tasksError } = useQuery(GET_TASKS, {
+  const { data: tasksData, loading: tasksLoading, error: tasksError, refetch: refetchTasks } = useQuery(GET_TASKS, {
     variables: { projectId },
   });
 
@@ -191,7 +191,12 @@ export default function TasksPage() {
             {/* Tasks Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredTasks.map((task) => (
-                <TaskCard key={task.id} task={task} onTaskClick={handleTaskClick} />
+                <TaskCard 
+                  key={task.id} 
+                  task={task} 
+                  onTaskClick={handleTaskClick} 
+                  onTaskUpdate={() => refetchTasks()}
+                />
               ))}
             </div>
           </>
